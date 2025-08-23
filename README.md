@@ -33,39 +33,44 @@ This is a PyTorch implementation for our ECCV 2022 paper "[`Real-time Online Vid
 
 ### Pre-extracted Feature
 
-You can directly download the pre-extracted feature (.zip) from the UTBox links below.
+You can directly download the pre-extracted feature (.zip) from the Google Drive links below.
 
 #### THUMOS'14
 
 |   Description  |   backbone   |    pretrain    |                            UTBox Link                             |
 |  ------------  |  ----------  |  ------------  |  ---------------------------------------------------------------  |
-|   frame label  |     N/A      |       N/A      | [link](https://utexas.box.com/s/7jr33g7mtoowsrzn99vecebu9co4wywv) |
-|   RGB          |  ResNet-50   |  Kinetics-400  | [link](https://utexas.box.com/s/fbetd0331iod7jx7udfbckn9359mrp6o) |
-|   Flow (TV-L1) | BN-Inception |  Kinetics-400  | [link](https://utexas.box.com/s/kdzeeztwlaphe8zcun5ebavv2pd37fxb) |
-|   Flow (NVOF)  | BN-Inception |  Kinetics-400  | [link](https://utexas.box.com/s/8tneyw7npy7gsgzydlu3610czlzmhs4k) |
-|   RGB          |  ResNet-50   |    ANet v1.3   | [link](https://utexas.box.com/s/avtdkeegkh5kl7ajg4ltqhd3ai33bb8m) |
-|   Flow (TV-L1) |  ResNet-50   |    ANet v1.3   | [link](https://utexas.box.com/s/rhvihb33e54ro07zsmcbgku16cikk2g4) |
+|   frame label  |     N/A      |       N/A      | [link](https://drive.google.com/file/d/1L6I1x6J5YORL9H6Gc4193GGbdBSNo34k/view?usp=sharing) |
+|   RGB          |  ResNet-50   |  Kinetics-400  | [link](https://drive.google.com/file/d/1G7d4wpoeGVNEhW9RQhpgF1nHNmDkwCGD/view?usp=sharing) |
+|   Flow (TV-L1) | BN-Inception |  Kinetics-400  | [link](https://drive.google.com/file/d/1bXKrUtrXcIOOod1fuwqHtVzceGEORb-q/view?usp=sharing) |
+|   Flow (NVOF)  | BN-Inception |  Kinetics-400  | [link](https://drive.google.com/file/d/14nlFB4tRagdPzOu5wUxZwd1nNIR33MvN/view?usp=sharing) |
+|   RGB          |  ResNet-50   |    ANet v1.3   | [link](https://drive.google.com/file/d/1td6sRku-uGN0OEA2R7ApK4kp0tudVNdj/view?usp=sharing) |
+|   Flow (TV-L1) |  ResNet-50   |    ANet v1.3   | [link](https://drive.google.com/file/d/1F-fWEOFpdAEbPzkugTQdJBIHych5iRMZ/view?usp=sharing) |
 
 #### EK100
 
 |  Description   |   backbone   |   pretrain     |                            UTBox Link                             |
 |  ------------  |  ----------  |  ------------  |  ---------------------------------------------------------------  |
-|  action label  |     N/A      |      N/A       | [link](https://utexas.box.com/s/xi1xowkhlmi079suwwq6dlez44lb846e) |
-|  noun label    |     N/A      |      N/A       | [link](https://utexas.box.com/s/vmg478wjbcf83wc0adw0t9yxduxjqna9) |
-|  verb label    |     N/A      |      N/A       | [link](https://utexas.box.com/s/e9yes31rblmuzb5mdrf3gy1mb7af7a63) |
-|  RGB           | BN-Inception | IN-1k + EK100  | [link](https://utexas.box.com/s/kypifujsplkg0ud7q955amgvoxflqzx5) |
-|  Flow (TV-L1)  | BN-Inception | IN-1k + EK100  | [link](https://utexas.box.com/s/2aga6r29o4zdziog3y89aliauguiqhmn) |
-|  Object        | Faster-RCNN  | MS-COCO + EK55 | [link](https://utexas.box.com/s/rsqdo3sihn7o4iyy6rtyu03mu77bh2ka) |
+|  action label  |     N/A      |      N/A       | [link](https://drive.google.com/file/d/1BGv9gW8gIbYhD3yLx5YB7X7GaLjrhKbi/view?usp=sharing) |
+|  noun label    |     N/A      |      N/A       | [link](https://drive.google.com/file/d/1j8HOCpmVpoFcXXCWBa-H-0gd5K4oOOYM/view?usp=sharing) |
+|  verb label    |     N/A      |      N/A       | [link](https://drive.google.com/file/d/10CGWNLscdq1YdAKOAlx8Y-LfdMrB1zHj/view?usp=sharing) |
+|  RGB           | BN-Inception | IN-1k + EK100  | [link](https://drive.google.com/file/d/1yHm_kOk5gTnYesl_hTld2uT_awmRJt4O/view?usp=sharing) |
+|  Flow (TV-L1)  | BN-Inception | IN-1k + EK100  | [link](https://drive.google.com/file/d/1Kf-3CwSqpQeKRz8sBQr7QDZTHUhL71nZ/view?usp=sharing) |
+|  Object        | Faster-RCNN  | MS-COCO + EK55 | [link](https://drive.google.com/file/d/1vA-jayPtX8YVWdh54KOuVttWdotLsgIE/view?usp=sharing) |
 * Note: The features are converted from [RULSTM](https://github.com/fpv-iplab/rulstm) to be compatible with the codebase.
 * Note: Object feature is not used in TeSTRa. The feature is uploaded for completeness only.
 
 Once the zipped files are downloaded, you are suggested to unzip them and follow to file organization (see below).
 
 ### (Alterative) Static links
+<s>
 It may be easier to download from static links via `wget` for non-GUI systems.
 To do so, simply change the utbox link from `https://utexas.box.com/s/xxxx` to `https://utexas.box.com/shared/static/xxxx.zip`.
 Unfortunately, UTBox does not support customized url names.
 Therfore, to `wget` while keeping the name readable, please refer to the bash scripts provided in [DATASET.md](./DATASET.md).
+</s>
+
+The data have been migrated from UTBox to Google Drive.
+Please refer to the bash scripts provided in [DATASET.md](./DATASET.md) using [https://github.com/wkentaro/gdown](gdown).
 
 
 ### (Alternative) Prepare dataset from scratch
@@ -181,17 +186,17 @@ For more details on the difference between `batch mode` and `stream mode`, pleas
 
 |       method      |    kernel type    |  mAP (%)  |                             config                                                |   checkpoint   |
 |  ---------------- |  ---------------  |  -------  |  -------------------------------------------------------------------------------  |  ------------  |
-|  LSTR (baseline)  |  Cross Attention  |   69.9    | [yaml](configs/THUMOS/LSTR/lstr_long_512_work_8_kinetics_1x.yaml)                 | [UTBox link](https://utexas.box.com/s/mcmzq1mrqwf5kphoa1ecbhp00fwn0ggy) |
-|  TeSTra           |  Laplace (α=e^-λ=0.97) |   70.8    | [yaml](configs/THUMOS/TESTRA/testra_long_512_work_8_kinetics_1x_decay_0.97.yaml)  | [UTBox link](https://utexas.box.com/s/tiigzks4n28rux98uegajmfizmmbd37v) |
-|  TeSTra           |    Box (α=e^-λ=1.0)    |   71.2    | [yaml](configs/THUMOS/TESTRA/testra_long_512_work_8_kinetics_1x_box.yaml)         | [UTBox link](https://utexas.box.com/s/5elnwycfc7w925bmidu3ecv7iu6zg994) |
-|  TeSTra (lite)    |    Box (α=e^-λ=1.0)    |   67.3    | [yaml](configs/THUMOS/TESTRA/testra_lite_long_512_work_8_kinetics_1x_box.yaml)    | [UTBox link](https://utexas.box.com/s/s1u51vt8ioun6l1o2tts2hzcgkb83h9a) |
+|  LSTR (baseline)  |  Cross Attention  |   69.9    | [yaml](configs/THUMOS/LSTR/lstr_long_512_work_8_kinetics_1x.yaml)                 | ~~[UTBox link](https://utexas.box.com/s/mcmzq1mrqwf5kphoa1ecbhp00fwn0ggy)~~ [Gdrive link](https://drive.google.com/file/d/1wKx3qi52_UM8OFZ3KGW31DV5l_xE5JbA/view?usp=sharing) |
+|  TeSTra           |  Laplace (α=e^-λ=0.97) |   70.8    | [yaml](configs/THUMOS/TESTRA/testra_long_512_work_8_kinetics_1x_decay_0.97.yaml)  | ~~[UTBox link](https://utexas.box.com/s/tiigzks4n28rux98uegajmfizmmbd37v)~~ [Gdrive link](https://drive.google.com/file/d/1vmOvlJ9OKTqvtOQMoTfsIKfJaoN_Y4NX/view?usp=sharing) |
+|  TeSTra           |    Box (α=e^-λ=1.0)    |   71.2    | [yaml](configs/THUMOS/TESTRA/testra_long_512_work_8_kinetics_1x_box.yaml)         | ~~[UTBox link](https://utexas.box.com/s/5elnwycfc7w925bmidu3ecv7iu6zg994)~~ [Gdrive link](https://drive.google.com/file/d/1v66NUPTBQ3oBEZTmC503zVPySI9JvNkw/view?usp=sharing) |
+|  TeSTra (lite)    |    Box (α=e^-λ=1.0)    |   67.3    | [yaml](configs/THUMOS/TESTRA/testra_lite_long_512_work_8_kinetics_1x_box.yaml)    | ~~[UTBox link](https://utexas.box.com/s/s1u51vt8ioun6l1o2tts2hzcgkb83h9a)~~ [Gdrive link](https://drive.google.com/file/d/1WShXsWjFEaJZDEanQ3it6UGAxyzK8bBR/view?usp=sharing) |
 
 ### EK100
 
 |  method  |    kernel type    |  verb (overall)  |  noun (overall)  |  action (overall)  |  config  |                                checkpoint                                |
 |  ------  |  ---------------  |  --------------  |  --------------  |  ----------------  |  ------  |  ----------------------------------------------------------------------  |
-|  TeSTra  |  Laplace (α=e^-λ=0.9)  |       30.8       |       35.8       |        17.6        |  [yaml](configs/EK100/TESTRA/testra_long_64_work_5_anti_2_kinetics_2x_mixup_v+n_eql_decay_0.9.yaml) |  [UTBox link](https://utexas.box.com/s/kayq0jpb9u2wgjdcnmy6r2flxfk87msx) |
-|  TeSTra  |    Box (α=e^-λ=1.0)    |       31.4       |       33.9       |        17.0        |  [yaml](configs/EK100/TESTRA/testra_long_64_work_5_anti_2_kinetics_2x_mixup_v+n_eql_box.yaml)       |  [UTBox link](https://utexas.box.com/s/ufh35q0by57xo7r305gmcyjjlnjxt800) |
+|  TeSTra  |  Laplace (α=e^-λ=0.9)  |       30.8       |       35.8       |        17.6        |  [yaml](configs/EK100/TESTRA/testra_long_64_work_5_anti_2_kinetics_2x_mixup_v+n_eql_decay_0.9.yaml) |  ~~[UTBox link](https://utexas.box.com/s/kayq0jpb9u2wgjdcnmy6r2flxfk87msx)~~ [Gdrive link](https://drive.google.com/file/d/1U59JD6U18OEe-5GXR_4RvccsySzJnXzv/view?usp=sharing) |
+|  TeSTra  |    Box (α=e^-λ=1.0)    |       31.4       |       33.9       |        17.0        |  [yaml](configs/EK100/TESTRA/testra_long_64_work_5_anti_2_kinetics_2x_mixup_v+n_eql_box.yaml)       |  ~~[UTBox link](https://utexas.box.com/s/ufh35q0by57xo7r305gmcyjjlnjxt800)~~ [Gdrive link](https://drive.google.com/file/d/1cHE9ddhsDYV-DpHvNbzW2k8CYzg6tWuC/view?usp=sharing) |
 
 ## Citations
 
@@ -206,7 +211,7 @@ If you are using the data/code/model provided here in a publication, please cite
 
 ## Contacts
 
-For any question, feel free to raise an issue or drop me an email via `yzhao [at] cs.utexas.edu`
+For any question, feel free to raise an issue or drop me an email via `zhaoyue [at]utexas.edu`
 
 ## License
 
