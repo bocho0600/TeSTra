@@ -8,7 +8,7 @@ from . import transformer as tr
 
 from .models import META_ARCHITECTURES as registry
 from .normalized_linear import NormalizedLinear
-from .feature_head import build_feature_head
+from .feature_head import build_feature_head, FEATURE_SIZES
 from ..utils.ek_utils import (action_to_noun_map, action_to_verb_map)
 
 
@@ -42,6 +42,32 @@ class LSTR(nn.Module):
         self.decay_alpha = cfg.MODEL.LSTR.ENC_ATTENTION_DECAY
 
         self.anticipation_num_samples = cfg.MODEL.LSTR.ANTICIPATION_NUM_SAMPLES
+
+        # Pre-embedding frame gate (ported from the LSTR fork): prune raw long-memory
+        # frames BEFORE the feature head so the whole long pipeline processes fewer
+        # frames. Works on the batch `forward` path (training + batch inference).
+        self.frame_gate_enabled = cfg.MODEL.LSTR.FRAME_GATE.ENABLED
+        self.frame_gate_top_k = cfg.MODEL.LSTR.FRAME_GATE.TOP_K
+        self.frame_gate_score = cfg.MODEL.LSTR.FRAME_GATE.SCORE
+        self.frame_gate_sparsity_weight = cfg.MODEL.LSTR.FRAME_GATE.SPARSITY_WEIGHT
+        if self.frame_gate_enabled:
+            if self.frame_gate_score not in ('norm', 'uniform', 'learned'):
+                raise ValueError("FRAME_GATE.SCORE must be 'norm', 'uniform' or "
+                                 "'learned', got {}".format(self.frame_gate_score))
+            if cfg.MODEL.LSTR.LONG_MEMORY_INCLUDE_WORK2:
+                raise NotImplementedError('FRAME_GATE is not supported together with '
+                                          'LONG_MEMORY_INCLUDE_WORK2.')
+            self._with_visual = 'visual' in cfg.INPUT.MODALITY
+            self._with_motion = 'motion' in cfg.INPUT.MODALITY
+            if self.frame_gate_score == 'learned':
+                gate_in = 0
+                if self._with_visual:
+                    gate_in += FEATURE_SIZES[cfg.INPUT.VISUAL_FEATURE]
+                if self._with_motion:
+                    gate_in += FEATURE_SIZES[cfg.INPUT.MOTION_FEATURE]
+                self.frame_gate_scorer = nn.Linear(gate_in, 1)
+        self._frame_gate_reg = None
+        self._frame_gate_logged = False
 
         # Build position encoding
         self.pos_encoding = tr.PositionalEncoding(self.d_model, self.dropout)
@@ -132,26 +158,105 @@ class LSTR(nn.Module):
 
         self.pred_future = 'PRED_FUTURE' in list(zip(*cfg.MODEL.CRITERIONS))[0]
 
-    def forward(self, visual_inputs, motion_inputs, object_inputs, memory_key_padding_mask=None):
-        if self.long_enabled:
-            # Compute long memories
-            if self.long_memory_use_pe:
-                long_memories = self.pos_encoding(self.feature_head_long(
-                    visual_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
-                    motion_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
-                    object_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
-                ).transpose(0, 1))
-                long_memories = long_memories.transpose(0, 1) ## transpose back
+    def _apply_frame_gate(self, long_visual, long_motion, long_object, memory_key_padding_mask):
+        """Pre-embedding frame gate: score RAW long-memory frames, keep the top-k,
+        and run the feature head + (optional) positional encoding on ONLY those k.
+
+        Returns (long_memories, gated_mask): (k, B, d) tokens and the (B, k) mask.
+        """
+        B, N = long_visual.shape[0], long_visual.shape[1]
+        k = min(int(self.frame_gate_top_k), N)
+
+        if not self._frame_gate_logged:
+            if k >= N:
+                print('[LSTR] frame gate ENABLED but TOP_K ({}) >= N ({}) -> '
+                      'keeping ALL frames (no-op)'.format(self.frame_gate_top_k, N), flush=True)
             else:
-                long_memories = self.feature_head_long(
-                    visual_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
-                    motion_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
-                    object_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
-                )
-            batch_size = long_memories.shape[0]
-            # if long_memories.ndim == 5:
-            #     long_memories = self.pos_encoding_3d_spatial(long_memories)
-            long_memories = long_memories.view(batch_size, -1, self.d_model).transpose(0, 1)
+                print('[LSTR] pre-embedding frame gate ACTIVE: keeping {} / {} raw '
+                      'frames (score={})'.format(k, N, self.frame_gate_score), flush=True)
+            self._frame_gate_logged = True
+
+        raw_score = None
+        if self.frame_gate_score == 'uniform':
+            idx = torch.linspace(0, N - 1, k, device=long_visual.device).round().long()
+            idx = idx.unsqueeze(0).expand(B, k)
+        elif self.frame_gate_score == 'learned':
+            feats = []
+            if self._with_visual:
+                feats.append(long_visual)
+            if self._with_motion:
+                feats.append(long_motion)
+            raw = torch.cat(feats, dim=-1)                                 # (B, N, gate_in)
+            raw_score = self.frame_gate_scorer(raw).squeeze(-1)           # (B, N)
+            score = raw_score
+            if memory_key_padding_mask is not None:
+                score = score + memory_key_padding_mask
+            idx = score.topk(k, dim=1).indices
+        else:  # 'norm' -- cheap saliency from raw feature magnitude
+            score = long_visual.norm(dim=-1) + long_motion.norm(dim=-1)   # (B, N)
+            if memory_key_padding_mask is not None:
+                score = score + memory_key_padding_mask
+            idx = score.topk(k, dim=1).indices
+        idx, _ = torch.sort(idx, dim=1)                                   # keep temporal order
+
+        # Gather the raw frames for the kept indices (all three streams).
+        sel_visual = torch.gather(long_visual, 1, idx.unsqueeze(-1).expand(B, k, long_visual.shape[-1]))
+        sel_motion = torch.gather(long_motion, 1, idx.unsqueeze(-1).expand(B, k, long_motion.shape[-1]))
+        sel_object = torch.gather(long_object, 1, idx.unsqueeze(-1).expand(B, k, long_object.shape[-1]))
+
+        # Embed only the kept frames.
+        emb = self.feature_head_long(sel_visual, sel_motion, sel_object).transpose(0, 1)  # (k, B, d)
+
+        # Learned gate: hard top-k is non-differentiable, so multiply the kept
+        # embeddings by a soft sigmoid weight -> gradients reach the scorer.
+        if raw_score is not None:
+            gate_w = torch.sigmoid(torch.gather(raw_score, 1, idx))       # (B, k)
+            emb = emb * gate_w.transpose(0, 1).unsqueeze(-1)
+            if self.frame_gate_sparsity_weight > 0:
+                self._frame_gate_reg = (self.frame_gate_sparsity_weight
+                                        * torch.sigmoid(raw_score).mean())
+
+        # Positional encoding at the ORIGINAL frame positions (if the model uses PE
+        # on long memory), matching the non-gated path.
+        if self.long_memory_use_pe:
+            pe = self.pos_encoding.pe.squeeze(1)[idx].transpose(0, 1)      # (k, B, d)
+            emb = self.pos_encoding.dropout(emb + pe)
+
+        gated_mask = (torch.gather(memory_key_padding_mask, 1, idx)
+                      if memory_key_padding_mask is not None else None)
+        return emb, gated_mask
+
+    def forward(self, visual_inputs, motion_inputs, object_inputs, memory_key_padding_mask=None):
+        self._frame_gate_reg = None   # reset per forward; set by _apply_frame_gate
+        if self.long_enabled:
+            if self.frame_gate_enabled:
+                # Prune raw frames BEFORE the feature head; returns (k, B, d) tokens
+                # and the matching (B, k) key-padding mask.
+                long_memories, memory_key_padding_mask = self._apply_frame_gate(
+                    visual_inputs[:, :self.long_memory_num_samples],
+                    motion_inputs[:, :self.long_memory_num_samples],
+                    object_inputs[:, :self.long_memory_num_samples],
+                    memory_key_padding_mask)
+                batch_size = long_memories.shape[1]
+            else:
+                # Compute long memories
+                if self.long_memory_use_pe:
+                    long_memories = self.pos_encoding(self.feature_head_long(
+                        visual_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
+                        motion_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
+                        object_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
+                    ).transpose(0, 1))
+                    long_memories = long_memories.transpose(0, 1) ## transpose back
+                else:
+                    long_memories = self.feature_head_long(
+                        visual_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
+                        motion_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
+                        object_inputs[:, :self.long_memory_num_samples if not self.include_work2 else None],
+                    )
+                batch_size = long_memories.shape[0]
+                # if long_memories.ndim == 5:
+                #     long_memories = self.pos_encoding_3d_spatial(long_memories)
+                long_memories = long_memories.view(batch_size, -1, self.d_model).transpose(0, 1)
             # print(long_memories.shape)   # T(*H*W), B, C
 
             if len(self.enc_modules) > 0:

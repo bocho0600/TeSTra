@@ -71,6 +71,16 @@ _C.MODEL.LSTR.FC_NORM = False
 _C.MODEL.LSTR.INFERENCE_MODE = 'batch'
 # Position Embedding
 # _C.MODEL.LSTR.POSITION_EMBEDDING = 'default'
+# Pre-embedding frame gate: prune raw long-memory frames BEFORE the feature head
+# so the whole long pipeline processes fewer frames (ported from the LSTR fork).
+_C.MODEL.LSTR.FRAME_GATE = CN()
+_C.MODEL.LSTR.FRAME_GATE.ENABLED = False
+# Number of long-memory frames to keep (<= LONG_MEMORY_NUM_SAMPLES).
+_C.MODEL.LSTR.FRAME_GATE.TOP_K = 512
+# Scoring signal used to rank frames: 'norm' | 'uniform' | 'learned'.
+_C.MODEL.LSTR.FRAME_GATE.SCORE = 'norm'
+# L1 sparsity penalty weight for the learned gate (0 = off).
+_C.MODEL.LSTR.FRAME_GATE.SPARSITY_WEIGHT = 0.0
 
 # ---------------------------------------------------------------------------- #
 # Criterion

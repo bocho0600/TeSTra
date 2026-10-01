@@ -101,6 +101,11 @@ def do_perframe_det_train(cfg,
                             loss += pred_loss
                         if cfg.MODEL.LSTR.V_N_CLASSIFIER:
                             loss += noun_loss + verb_loss
+                        # Learned frame-gate L1 sparsity penalty (stashed on the
+                        # model during forward); no-op for norm/uniform gates.
+                        _gate = model.module if hasattr(model, 'module') else model
+                        if getattr(_gate, '_frame_gate_reg', None) is not None:
+                            loss = loss + _gate._frame_gate_reg
                         if loss.item() != 0:
                             loss.backward()
                             optimizer.step()
