@@ -1,0 +1,47 @@
+#!/bin/bash -l
+#PBS -N ek100_smoke
+#PBS -l select=1:ncpus=4:ngpus=1:mem=48GB:gpu_id=A100
+#PBS -l walltime=06:00:00
+#PBS -m abe
+#PBS -M n11429984@qut.edu.au
+#PBS -j oe
+#PBS -q gpu_batch_exec
+
+# SMOKE TEST for the EK100 frame-gate port: train ONE epoch, save, then eval the
+# baseline and the gate (norm, keep 32/64). Validates the whole pipeline
+# (data layer -> 3-stream model -> V_N heads -> EQL loss -> checkpoint -> gate eval)
+# cheaply before committing to the full ~48h run (run_ek100.pbs).
+
+REPO_DIR=~/TeSTra
+CONFIG=configs/EK100/TESTRA/testra_long_64_work_5_anti_2_kinetics_2x_mixup_v+n_eql_box.yaml
+CKPT=checkpoints/EK100/TESTRA/testra_long_64_work_5_anti_2_kinetics_2x_mixup_v+n_eql_box/epoch-1.pth
+EVAL_OPTS="DATA_LOADER.BATCH_SIZE 4 DATA_LOADER.NUM_WORKERS 4 DATA_LOADER.PIN_MEMORY False"
+
+cd "$REPO_DIR"
+module load Miniconda3
+conda activate testra 2>/dev/null || conda activate lstr
+export PYTHONPATH=$PYTHONPATH:$(pwd)/src
+
+echo "########## SMOKE: train 1 epoch ##########"
+python tools/train_net.py --config_file "$CONFIG" --gpu 0 \
+    SOLVER.NUM_EPOCHS 1 SOLVER.SAVE_EVERY 1
+TRAIN_EXIT=$?
+
+if [ $TRAIN_EXIT -eq 0 ]; then
+    echo "########## SMOKE: eval BASELINE (1-epoch ckpt) ##########"
+    python tools/test_net.py --config_file "$CONFIG" --gpu 0 \
+        MODEL.CHECKPOINT "$CKPT" $EVAL_OPTS
+
+    echo "########## SMOKE: eval FRAME GATE norm (TOP_K=32) -- tests the ported gate ##########"
+    python tools/test_net.py --config_file "$CONFIG" --gpu 0 \
+        MODEL.CHECKPOINT "$CKPT" \
+        MODEL.LSTR.FRAME_GATE.ENABLED True \
+        MODEL.LSTR.FRAME_GATE.SCORE norm \
+        MODEL.LSTR.FRAME_GATE.TOP_K 32 \
+        $EVAL_OPTS
+    echo "########## SMOKE PASSED: pipeline + gate run end-to-end. Safe to submit run_ek100.pbs ##########"
+else
+    echo "Smoke training failed (exit $TRAIN_EXIT); fix before the full run."
+fi
+
+exit $TRAIN_EXIT
