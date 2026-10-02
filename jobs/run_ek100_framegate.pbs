@@ -1,6 +1,6 @@
 #!/bin/bash -l
 #PBS -N ek100_gate
-#PBS -l select=1:ncpus=4:ngpus=1:mem=48GB:gpu_id=A100
+#PBS -l select=1:ncpus=4:ngpus=1:mem=128GB:gpu_id=A100
 #PBS -l walltime=48:00:00
 #PBS -m abe
 #PBS -M n11429984@qut.edu.au
@@ -36,7 +36,7 @@ conda activate testra 2>/dev/null || conda activate lstr
 export PYTHONPATH=$PYTHONPATH:$(pwd)/src
 
 # 1) Train the baseline (frame gate OFF by default).
-python tools/train_net.py --config_file "$CONFIG" --gpu 0
+python tools/train_net.py --config_file "$CONFIG" --gpu 0 SOLVER.PHASES "['train']"
 TRAIN_EXIT=$?
 
 if [ $TRAIN_EXIT -eq 0 ]; then

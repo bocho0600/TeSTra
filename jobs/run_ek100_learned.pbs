@@ -1,6 +1,6 @@
 #!/bin/bash -l
 #PBS -N ek100_learned
-#PBS -l select=1:ncpus=4:ngpus=1:mem=48GB:gpu_id=A100
+#PBS -l select=1:ncpus=4:ngpus=1:mem=128GB:gpu_id=A100
 #PBS -l walltime=48:00:00
 #PBS -m abe
 #PBS -M n11429984@qut.edu.au
@@ -32,7 +32,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)/src
 echo "########## TRAIN: learned frame gate on EK100 (TOP_K=32, sparsity=0.01) ##########"
 python tools/train_net.py --config_file "$CONFIG" --gpu 0 \
     $GATE_OPTS MODEL.LSTR.FRAME_GATE.SPARSITY_WEIGHT 0.01 \
-    SESSION $SESSION
+    SESSION $SESSION SOLVER.PHASES "['train']"
 TRAIN_EXIT=$?
 
 if [ $TRAIN_EXIT -eq 0 ]; then

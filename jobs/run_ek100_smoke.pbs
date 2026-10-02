@@ -1,6 +1,6 @@
 #!/bin/bash -l
 #PBS -N ek100_smoke
-#PBS -l select=1:ncpus=4:ngpus=1:mem=48GB:gpu_id=A100
+#PBS -l select=1:ncpus=4:ngpus=1:mem=128GB:gpu_id=A100
 #PBS -l walltime=06:00:00
 #PBS -m abe
 #PBS -M n11429984@qut.edu.au
@@ -26,7 +26,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)/src
 
 echo "########## SMOKE: train 1 epoch ##########"
 python tools/train_net.py --config_file "$CONFIG" --gpu 0 \
-    SOLVER.NUM_EPOCHS 1 SOLVER.SAVE_EVERY 1
+    SOLVER.NUM_EPOCHS 1 SOLVER.SAVE_EVERY 1 SOLVER.PHASES "['train']"
 TRAIN_EXIT=$?
 
 if [ $TRAIN_EXIT -eq 0 ]; then
