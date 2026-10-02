@@ -18,6 +18,8 @@ CKPT=checkpoints/EK100/TESTRA/testra_long_64_work_5_anti_2_kinetics_2x_mixup_v+n
 EVAL_OPTS="DATA_LOADER.BATCH_SIZE 4 DATA_LOADER.NUM_WORKERS 4 DATA_LOADER.PIN_MEMORY False"
 
 cd "$REPO_DIR"
+mkdir -p "$REPO_DIR/joblogs"
+exec > >(tee -a "$REPO_DIR/joblogs/${PBS_JOBNAME:-ek100}.${PBS_JOBID:-manual}.log") 2>&1
 module load Miniconda3
 conda activate testra 2>/dev/null || conda activate lstr
 export PYTHONPATH=$PYTHONPATH:$(pwd)/src
