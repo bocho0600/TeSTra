@@ -42,16 +42,19 @@ fi
 
 echo
 echo "==> RULSTM annotation CSVs (needed by the EK100 data layer + EQL loss)"
-mkdir -p "$HOME/TeSTra/external"
-cd "$HOME/TeSTra/external"
-if [ ! -d rulstm ]; then
-    git clone https://github.com/fpv-iplab/rulstm.git
-fi
-echo "RULSTM cloned to ~/TeSTra/external/rulstm"
-echo "The EK100 CSVs must end up at: external/rulstm/RULSTM/data/ek100/"
-echo "  (training.csv, validation.csv, and the verb/noun/action mapping CSVs)"
-echo "Follow the RULSTM README to fetch its EK100 annotation data if those"
-echo "CSVs are not already present under RULSTM/data/ek100/."
+# Fetch the CSVs directly into the path the config expects (robust; a plain
+# RULSTM clone can miss the data dir on some setups).
+RULSTM_DEST="$HOME/TeSTra/external/rulstm/RULSTM/data/ek100"
+RULSTM_BASE="https://raw.githubusercontent.com/fpv-iplab/rulstm/master/RULSTM/data/ek100"
+mkdir -p "$RULSTM_DEST"
+for f in actions.csv training.csv validation.csv \
+         training_videos.csv validation_videos.csv test_timestamps.csv \
+         validation_tail_actions_ids.csv validation_tail_nouns_ids.csv \
+         validation_tail_verbs_ids.csv validation_unseen_participants_ids.csv; do
+    echo "fetching $f"
+    curl -fsSL "$RULSTM_BASE/$f" -o "$RULSTM_DEST/$f"
+done
+echo "RULSTM EK100 CSVs -> $RULSTM_DEST"
 
 echo
 echo "==> Verify:"
