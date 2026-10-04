@@ -17,6 +17,15 @@ for f in actions.csv training.csv validation.csv \
     curl -fsSL "$BASE/$f" -o "$DEST/$f"
 done
 
+# RULSTM python module needed by the EK100 EVALUATION (verb/noun marginalization):
+#   perframe_det_batch_inference.py does
+#   `from external.rulstm.RULSTM.utils import (get_marginal_indexes, marginalize, ...)`
+RULSTM_DIR=$HOME/TeSTra/external/rulstm/RULSTM
+mkdir -p "$RULSTM_DIR"
+echo "fetching utils.py"
+curl -fsSL "https://raw.githubusercontent.com/fpv-iplab/rulstm/master/RULSTM/utils.py" -o "$RULSTM_DIR/utils.py"
+
 echo
-echo "Done -> $DEST"
-ls -la "$DEST"
+echo "Done."
+echo "CSVs  -> $DEST"; ls "$DEST" | head
+echo "utils -> $RULSTM_DIR/utils.py"; ls -l "$RULSTM_DIR/utils.py"
